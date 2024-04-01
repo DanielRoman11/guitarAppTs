@@ -6,12 +6,12 @@ import { Cantidad, Guitar } from '../interfaces'
 
 
 export default function useCart() {
-  const initializeCart = () => {
+  const initializeCart = (): Guitar[] => {
     const cartData = localStorage.getItem('cart')
     return cartData ? JSON.parse(cartData) : []
   }
   
-    const initializeCantidad = () => {
+    const initializeCantidad = (): Cantidad[] => {
       const cantidadData = localStorage.getItem('cantidad')
       return cantidadData ? JSON.parse(cantidadData) : []
     }
@@ -46,9 +46,9 @@ export default function useCart() {
   
     const itemLessTimes = (id: number) => {
       const cantidadCopy = [...cantidad]
-      const thisTimes = cantidadCopy.find((item: Guitar) => Number(item.id) === id)
+      const thisTimes = cantidadCopy.find((item) => Number(item.id) === id)
   
-      if(thisTimes.times > 1){
+      if(thisTimes !== undefined && thisTimes.times > 1){
           thisTimes.times -= 1
           setCantidad([...cantidadCopy])
       }
@@ -58,20 +58,28 @@ export default function useCart() {
       const thisItem: Guitar | undefined = cart.find((item: Guitar) => Number(item.id) === id)
   
       setCart(cart.filter((item: Guitar) => item !== thisItem))
-      setCantidad(cantidad.filter((item: Guitar) => Number(item.id) !== id))
+      setCantidad(cantidad.filter((item) => Number(item.id) !== id))
     };
   
     const flushCart = () => { setCart([]); setCantidad([]) };
   
-    const totalPrice: number = useMemo(
-      () => cart.reduce((totalAcc: number, item: Guitar) => {
-          const thisQuantity = cantidad.find((i:Guitar) => i.id === item.id)
+    const totalPrice = useMemo(
+      () => cart.reduce((totalAcc, item) => {
+          const thisQuantity = cantidad.find((elem) => elem.id === item.id);
   
-          return totalAcc + (item.price * thisQuantity.times)
-      }, 0), [cart, cantidad])
+          return thisQuantity !== undefined 
+            ? totalAcc + (item.price * thisQuantity.times) 
+            : totalAcc
+      }, 0), 
+      [cart, cantidad]
+  );
+  
   
 
-    const itemsAdded = (id: number): number => (cantidad.find((item: Guitar) => Number(item.id) === id).times);
+    const itemsAdded = (id: number): number | false => {
+        const foundItem = cantidad.find((item) => item.id === id);
+        return foundItem !== undefined ? foundItem.times : false
+    };
 
     const isCartEmpty = useMemo(() => cart.length === 0, [cart]);
 
